@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bazario Seller | Management Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdfdfd; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid #f1f5f9; }
+        .nav-active { color: #4f46e5 !important; border-bottom: 3px solid #4f46e5; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .tab-content { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <div id="notif-box" class="fixed top-4 right-4 left-4 z-[100] flex flex-col gap-2"></div>
+
+    <div id="page-auth" class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-sm glass p-8 rounded-[2.5rem] shadow-xl">
+            <h1 class="text-3xl font-black text-indigo-600 mb-2">Seller Hub</h1>
+            <p class="text-slate-400 mb-8 font-medium">Manage your shop in real-time</p>
+            <form id="form-auth" class="space-y-4">
+                <div id="signup-only" class="space-y-4">
+                    <input type="text" id="shop-name" placeholder="Shop Name" class="w-full p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                </div>
+                <input type="email" id="email" placeholder="Business Email" required class="w-full p-4 rounded-2xl border outline-none bg-white">
+                <input type="password" id="pass" placeholder="Password" required class="w-full p-4 rounded-2xl border outline-none bg-white">
+                <button type="submit" id="btn-auth" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition">Enter Dashboard</button>
+            </form>
+            <button onclick="toggleAuth()" id="toggle-btn" class="w-full mt-6 text-indigo-600 font-bold text-sm underline">Switch to Login</button>
+        </div>
+    </div>
+
+    <div id="page-app" class="hidden min-h-screen">
+        <nav class="glass sticky top-0 z-50 flex justify-around p-4 border-b">
+            <button onclick="switchTab('stats', this)" class="nav-btn nav-active font-bold text-slate-400 pb-2 px-2">Stats</button>
+            <button onclick="switchTab('orders', this)" class="nav-btn font-bold text-slate-400 pb-2 px-2">Orders</button>
+            <button onclick="switchTab('add', this)" class="nav-btn font-bold text-slate-400 pb-2 px-2">Add Product</button>
+            <button onclick="logout()" class="text-red-500 font-bold pb-2"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+        </nav>
+
+        <main class="p-5 max-w-lg mx-auto">
+            
+            <section id="tab-stats" class="tab-content space-y-6">
+                <div class="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <p class="opacity-80 font-bold text-xs uppercase tracking-widest">Total Earnings</p>
+                        <h2 id="total-revenue" class="text-4xl font-black mt-1">$0.00</h2>
+                    </div>
+                    <i data-lucide="trending-up" class="absolute right-[-10%] bottom-[-10%] w-32 h-32 opacity-10"></i>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass p-6 rounded-3xl">
+                        <p class="text-slate-400 text-xs font-bold uppercase">Orders</p>
+                        <p id="total-orders" class="text-2xl font-black text-slate-800">0</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl">
+                        <p class="text-slate-400 text-xs font-bold uppercase">Live Products</p>
+                        <p id="total-prods" class="text-2xl font-black text-slate-800">0</p>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-lg">My Products</h3>
+                <div id="my-products-list" class="space-y-3"></div>
+            </section>
+
+            <section id="tab-orders" class="tab-content hidden space-y-4">
+                <h3 class="font-bold text-xl">Incoming Orders</h3>
+                <div id="seller-orders-list" class="space-y-4">
+                    </div>
+            </section>
+
+            <section id="tab-add" class="tab-content hidden">
+                <div class="glass p-8 rounded-[2.5rem] space-y-4">
+                    <h3 class="font-bold text-xl mb-4">New Product</h3>
+                    <input type="text" id="p-name" placeholder="Name" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none">
+                    <input type="number" id="p-price" placeholder="Price ($)" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none">
+                    <select id="p-cat" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none">
+                        <option>Decoration</option><option>Wellness</option><option>Electronics</option><option>Grocery</option>
+                    </select>
+                    <input type="text" id="p-img" placeholder="Pinterest Image Direct Link" class="w-full p-4 rounded-2xl bg-slate-50 border outline-none">
+                    <button onclick="publishProduct()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-xl">Post Product</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-verify" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-xs p-8 rounded-[2.5rem] text-center">
+            <h3 class="font-bold text-xl mb-2">Verify PIN</h3>
+            <p class="text-slate-400 text-sm mb-6">Enter the 4-digit code provided by the customer</p>
+            <input type="number" id="pin-input" placeholder="0000" class="w-full text-center text-3xl font-black tracking-[1rem] p-4 border-b-4 border-indigo-600 outline-none mb-6">
+            <button onclick="confirmPin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">Complete Delivery</button>
+            <button onclick="closeVerify()" class="mt-4 text-slate-400 font-bold text-sm">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBcDBUaN_1uawdtJPZvrf_6-9uIGKQfxHA", authDomain: "bazario-69aff.firebaseapp.com", projectId: "bazario-69aff", storageBucket: "bazario-69aff.firebasestorage.app", messagingSenderId: "1022335327696", appId: "1:1022335327696:web:3af370ac308bbc298e2dd5" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUid = null;
+        let isSignup = true;
+        let activeVerifyId = null;
+        let activeVerifyPin = null;
+
+        // AUTH
+        function toggleAuth() {
+            isSignup = !isSignup;
+            document.getElementById('signup-only').classList.toggle('hidden', !isSignup);
+            document.getElementById('btn-auth').innerText = isSignup ? 'Enter Dashboard' : 'Login';
+        }
+
+        document.getElementById('form-auth').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value, pass = document.getElementById('pass').value;
+            try {
+                if(isSignup) {
+                    const res = await auth.createUserWithEmailAndPassword(email, pass);
+                    await db.collection("sellers").doc(res.user.uid).set({ shopName: document.getElementById('shop-name').value, uid: res.user.uid });
+                } else await auth.signInWithEmailAndPassword(email, pass);
+            } catch (err) { alert(err.message); }
+        };
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                currentUid = user.uid;
+                document.getElementById('page-auth').classList.add('hidden');
+                document.getElementById('page-app').classList.remove('hidden');
+                syncDashboard();
+            } else {
+                document.getElementById('page-auth').classList.remove('hidden');
+                document.getElementById('page-app').classList.add('hidden');
+            }
+        });
+
+        // DASHBOARD DATA
+        function syncDashboard() {
+            // Products
+            db.collection("products").where("sellerId", "==", currentUid).onSnapshot(snap => {
+                const list = document.getElementById('my-products-list');
+                document.getElementById('total-prods').innerText = snap.size;
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    list.innerHTML += `<div class="glass p-4 rounded-2xl flex items-center gap-4">
+                        <img src="${p.imageUrl}" class="w-12 h-12 rounded-xl object-cover">
+                        <div class="flex-1 font-bold text-sm">${p.name} <br><span class="text-indigo-600">$${p.price}</span></div>
+                        <button onclick="deleteProd('${doc.id}')" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>`;
+                });
+                lucide.createIcons();
+            });
+
+            // Orders (Capturing Address & Phone)
+            db.collection("orders").where("sellerId", "==", currentUid).onSnapshot(snap => {
+                const list = document.getElementById('seller-orders-list');
+                let revenue = 0;
+                let count = 0;
+
+                list.innerHTML = '';
+                snap.forEach(doc => {
+                    const o = doc.data();
+                    if(o.status === 'completed') revenue += parseFloat(o.orderTotal);
+                    if(o.status === 'pending') {
+                        count++;
+                        list.innerHTML += `
+                            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-indigo-50 space-y-4">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-bold text-lg">${o.productName}</h4>
+                                    <span class="bg-amber-100 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-md">NEW ORDER</span>
+                                </div>
+                                <div class="space-y-2 py-3 border-y border-dashed">
+                                    <div class="flex gap-2 items-center text-slate-600"><i data-lucide="map-pin" class="w-4 h-4"></i> <span class="text-xs font-medium">${o.customerAddress}</span></div>
+                                    <div class="flex gap-2 items-center text-slate-600"><i data-lucide="phone" class="w-4 h-4"></i> <span class="text-xs font-bold">${o.customerPhone}</span></div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button onclick="verifyOrder('${doc.id}', '${o.pin}')" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm">Verify PIN</button>
+                                    <a href="tel:${o.customerPhone}" class="p-3 bg-slate-100 rounded-xl text-slate-600"><i data-lucide="phone-call" class="w-5 h-5"></i></a>
+                                </div>
+                            </div>`;
+                    }
+                });
+                document.getElementById('total-revenue').innerText = `$${revenue.toFixed(2)}`;
+                document.getElementById('total-orders').innerText = count;
+                if(count === 0) list.innerHTML = `<div class="text-center py-20 text-slate-400 font-medium">No pending orders</div>`;
+                lucide.createIcons();
+            });
+        }
+
+        // ACTIONS
+        async function publishProduct() {
+            const name = document.getElementById('p-name').value, price = document.getElementById('p-price').value;
+            const img = document.getElementById('p-img').value, cat = document.getElementById('p-cat').value;
+            if(!name || !price || !img) return alert("All fields required");
+
+            await db.collection("products").add({ sellerId: currentUid, name, price, imageUrl: img, category: cat, status: 'In Stock' });
+            alert("Product Live!");
+            document.querySelectorAll('#tab-add input').forEach(i => i.value = '');
+            switchTab('stats', document.querySelector('[onclick*="stats"]'));
+        }
+
+        window.deleteProd = (id) => confirm("Delete this product?") && db.collection("products").doc(id).delete();
+
+        window.verifyOrder = (id, pin) => {
+            activeVerifyId = id; activeVerifyPin = pin;
+            document.getElementById('modal-verify').classList.remove('hidden');
+        };
+
+        window.confirmPin = async () => {
+            const input = document.getElementById('pin-input').value;
+            if(input === activeVerifyPin) {
+                await db.collection("orders").doc(activeVerifyId).update({ status: 'completed' });
+                alert("Delivery Verified Successfully!");
+                closeVerify();
+            } else alert("Invalid PIN. Ask the customer for the correct code.");
+        };
+
+        window.closeVerify = () => {
+            document.getElementById('modal-verify').classList.add('hidden');
+            document.getElementById('pin-input').value = '';
+        };
+
+        window.switchTab = (id, btn) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+            document.getElementById('tab-'+id).classList.remove('hidden');
+            btn.classList.add('nav-active');
+            lucide.createIcons();
+        };
+
+        window.logout = () => auth.signOut();
+        lucide.createIcons();
+        <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Service Worker Registered"))
+      .catch(err => console.log("Service Worker Failed", err));
+  }
+</script>
+
+    </script>
+</body>
+</html>
